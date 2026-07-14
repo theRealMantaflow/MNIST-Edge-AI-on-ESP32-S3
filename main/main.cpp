@@ -37,13 +37,17 @@ class LinearLayer {
 
     void operator()(const float* input, float* output) const {
         for (int o = 0; o < out_features; o++) {
-            float raw_dot_prod = 0;
+            float acc = 0.0f;
             for (int i = 0; i < in_features; i++) {
-                raw_dot_prod += input[i] * (float)weights[o * in_features + i];
+                acc +=
+                    input[i] * static_cast<float>(weights[o * in_features + i]);
             }
 
-            if (use_relu) raw_dot_prod = std::max(0.0f, raw_dot_prod);
-            output[o] = raw_dot_prod;
+            acc = (acc * w_scale) + (static_cast<float>(biases[o]) * b_scale);
+            if (use_relu) {
+                acc = std::max(0.0f, acc);
+            }
+            output[o] = acc;
         }
     }
 };
@@ -85,14 +89,16 @@ class InferenceEngine {
         }
     }
 
-    // Reads the exact number of bytes from the USB serial/jtag interface into the provided buffer.
+    // Reads the exact number of bytes from the USB serial/jtag interface into
+    // the provided buffer.
     bool read_exact(uint8_t* buffer, size_t length) {
         size_t offset = 0;
         while (offset < length) {
             int bytes_read = usb_serial_jtag_read_bytes(
                 buffer + offset, length - offset, portMAX_DELAY);
             if (bytes_read <= 0) {
-                ESP_LOGE(TAG, "USB read failed while reading %u bytes", static_cast<unsigned int>(length));
+                ESP_LOGE(TAG, "USB read failed while reading %u bytes",
+                         static_cast<unsigned int>(length));
                 return false;
             }
             offset += static_cast<size_t>(bytes_read);
@@ -104,7 +110,8 @@ class InferenceEngine {
    public:
     InferenceEngine() {}
     void run() {
-        // Configure the usb jtag driver for bigger buffers to handle the image data
+        // Configure the usb jtag driver for bigger buffers to handle the image
+        // data
         usb_serial_jtag_driver_config_t usb_config = {
             .tx_buffer_size = 256,
             .rx_buffer_size = 1024,
@@ -114,7 +121,9 @@ class InferenceEngine {
         if (ret == ESP_OK) {
             ESP_LOGI(TAG, "USB Serial/JTAG driver installed successfully!");
         } else {
-            ESP_LOGE(TAG, "Failed to install USB Serial/JTAG driver! Error code: %d", ret);
+            ESP_LOGE(TAG,
+                     "Failed to install USB Serial/JTAG driver! Error code: %d",
+                     ret);
         }
 
         // send READY every 1000 ms to host till the host sends back ACK
@@ -187,15 +196,15 @@ class InferenceEngine {
                 esp_rom_crc32_le(0, raw_usb_pixels, image_len);
 
             if (calculated_crc != crc_value) {
-                ESP_LOGE(
-                    TAG, "CRC Mismatch! Received: 0x%08lx, Calculated: 0x%08lx",
-                    (unsigned long)crc_value, (unsigned long)calculated_crc);
-                continue; 
+                ESP_LOGE(TAG,
+                         "CRC Mismatch! Received: 0x%08lx, Calculated: 0x%08lx",
+                         static_cast<unsigned long>(crc_value),
+                         static_cast<unsigned long>(calculated_crc));
+                continue;
             }
 
-            // Normalize the pixel values to [0, 1] range for the model
             for (int i = 0; i < kImageSize; i++) {
-                input_buffer[i] = raw_usb_pixels[i] / 255.0f;
+                input_buffer[i] = static_cast<float>(raw_usb_pixels[i]);
             }
 
             // Pass the buffers through the functor chain
