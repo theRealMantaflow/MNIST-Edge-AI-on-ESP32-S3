@@ -43,7 +43,7 @@ class LinearLayer {
                     input[i] * static_cast<float>(weights[o * in_features + i]);
             }
 
-            acc = (acc * w_scale) + (static_cast<float>(biases[o]) * b_scale);
+            acc = (acc / w_scale) + (static_cast<float>(biases[o]) / b_scale);
             if (use_relu) {
                 acc = std::max(0.0f, acc);
             }
@@ -204,7 +204,7 @@ class InferenceEngine {
             }
 
             for (int i = 0; i < kImageSize; i++) {
-                input_buffer[i] = static_cast<float>(raw_usb_pixels[i]);
+                input_buffer[i] = static_cast<float>(raw_usb_pixels[i]) / 255.0f;
             }
 
             // Pass the buffers through the functor chain

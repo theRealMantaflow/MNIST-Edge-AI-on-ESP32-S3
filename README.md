@@ -19,7 +19,7 @@ Ensure you have the required machine learning and data processing libraries inst
 `pip install torch torchvision numpy pandas matplotlib scipy kagglehub`
 
 **2. Run the Jupyter Notebook**
-Open `mnist-edge_modelgen.ipynb` in Kaggle. 
+Open `mnist-edge_modelgen.ipynb` in Kaggle.
 This notebook performs the following:
 * Downloads the MNIST dataset.
 * Trains a 3-layer Multilayer Perceptron (MLP) (784 -> 100 -> 40 -> 10) using PyTorch.
@@ -65,4 +65,14 @@ SERIAL_PORT = '/dev/ttyACM0'  # Linux default
 BAUD_RATE = 115200
 ```
 
-![Output of the Inference](./python_output.png)
+## Phase 4: Performance and Results
+
+The accuracy after performing inference on the MNIST test dataset is 97.77%, which is quite good for a lightweight model running on a microcontroller. Out of the 10000 test images, the model correctly predicted 9777 images.
+
+You can view the interactive PC-to-ESP32 serial communication loop in action here:
+
+![Python Output](./python_output.png)
+
+The following image illustrates the final accuracy results after testing the full dataset:
+
+![Accuracy of the Inference](./accuracy_output.png)

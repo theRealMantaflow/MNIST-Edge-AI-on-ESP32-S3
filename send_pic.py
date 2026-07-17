@@ -2,7 +2,8 @@ import serial
 import time
 import random
 import numpy as np
-import torchvision.datasets as datasets
+import torch
+from torchvision import datasets
 import zlib
 import struct
 
@@ -10,6 +11,22 @@ import struct
 SERIAL_PORT = '/dev/ttyACM0'  # (or something like COM3 on Windows)
 BAUD_RATE = 115200
 
+def set_seed(seed=67):
+    import os
+    os.environ['PYTHONHASHSEED'] = str(seed)
+
+    # Python built-in random seed
+    random.seed(seed)
+
+    # NumPy random seed
+    np.random.seed(seed)
+
+    # PyTorch random seed for CPU
+    torch.manual_seed(seed)
+
+    # PyTorch random seed for all GPUs (if available)
+    torch.cuda.manual_seed(seed)
+    torch.cuda.manual_seed_all(seed)
 
 def wait_for_handshake(ser):
     """Blocks until the ESP32 sends the READY signal on startup."""
@@ -22,8 +39,7 @@ def wait_for_handshake(ser):
         elif line:
             print(f"[ESP32 Startup] {line}")
 
-
-def interactive_loop():
+def main_loop():
     print("Loading MNIST dataset into memory...")
     mnist_test = datasets.MNIST(root='./data', train=False, download=True)
 
@@ -35,6 +51,9 @@ def interactive_loop():
     ser.timeout = 5.0
     ser.dtr = True
     ser.rts = True
+    
+    true_predictions = 0
+    total_predictions = 0
 
     try:
         ser.open()
@@ -51,12 +70,13 @@ def interactive_loop():
         MAGIC = 0xAA55
         END = 0x55AA
         
-        while True:
+        # while True:
+        for idx in range(len(mnist_test)):
             #  User confirmation
-            input("\nPress [ENTER] to send a random image, or Ctrl+C to quit...")
+            # input("\nPress [ENTER] to send a random image, or Ctrl+C to quit...")
 
-            #  Picks a random image 
-            idx = random.randint(0, len(mnist_test) - 1)
+            #  Picks a random image
+            # idx = random.randint(0, len(mnist_test) - 1)
             image, true_label = mnist_test[idx]
             # Converts to bytes for ser.write()
             image_bytes = np.array(image, dtype=np.uint8).flatten().tobytes()
@@ -94,20 +114,27 @@ def interactive_loop():
                 if "Predicted Digit:" in line:
                     print(f"\n>>> {line} <<<\n")
                     if line[-1] == str(true_label):
+                        true_predictions += 1
                         print("Prediction is correct :)")
                     else:
                         print("Prediction is incorrect :(")
-                    break 
+                    total_predictions += 1
+                    break
 
     except serial.SerialException as e:
         print(f"\nSerial Error: {e}")
         print("Check if the port is correct and the device is plugged in.")
     except KeyboardInterrupt:
         print("\n\nExiting. Closing serial port...")
+        print(f"Total Predictions: {total_predictions}, Correct Predictions: {true_predictions}")
+        print(f"Accuracy: {true_predictions / total_predictions * 100:.2f}%")
     finally:
+        print(f"Total Predictions: {total_predictions}, Correct Predictions: {true_predictions}")
+        print(f"Accuracy: {true_predictions / total_predictions * 100:.2f}%")
         if ser.is_open:
             ser.close()
 
 
 if __name__ == "__main__":
-    interactive_loop()
+    set_seed(67)
+    main_loop()

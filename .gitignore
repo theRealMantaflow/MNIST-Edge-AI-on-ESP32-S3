@@ -1,7 +1,13 @@
+# Most of this .gitignore file is based on the default ESP-IDF .gitignore template, 
+# with some additional ignores for specific files and directories that are not relevant to the project.
+
 # macOS
 .DS_Store
 .AppleDouble
 .LSOverride
+
+# ignore all .old files
+*.old
 
 # Directory metadata
 .directory
@@ -35,12 +41,12 @@ sdkconfig.old
 # ESP-IDF dependencies
 # For older versions or manual component management
 /components/.idf/
-/components/model_weights_old.h
-/components/model_weights_old1.h
+# /components/model_weights_old.h
+# /components/model_weights_old1.h
 
 **/components/.idf/
-**/components/model_weights_old.h
-**/components/model_weights_old1.h
+# **/components/model_weights_old.h
+# **/components/model_weights_old1.h
 
 # For modern ESP-IDF component manager
 managed_components/
@@ -88,4 +94,3 @@ Desktop.ini
 .devcontainer/
 
 # Custom Ignores
-send_pic_copy.py
