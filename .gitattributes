@@ -1,2 +1,5 @@
 *.h linguist-language=C++
 *.cpp linguist-language=C++
+
+# ignore jyupiter notebook
+*.ipynb linguist-detectable=false
