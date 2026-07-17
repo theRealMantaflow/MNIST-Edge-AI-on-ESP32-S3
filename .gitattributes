@@ -1,0 +1,2 @@
+# ignore .h files
+*.h linguist-detectable=false
